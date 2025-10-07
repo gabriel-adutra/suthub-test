@@ -13,4 +13,5 @@ COPY backend ./backend
 
 EXPOSE 3000
 
-CMD ["python", "backend/api/app_groups.py"]
+# Use uvicorn to run the FastAPI ASGI app
+CMD ["uvicorn", "backend.api.app:app", "--host", "0.0.0.0", "--port", "3000"]
