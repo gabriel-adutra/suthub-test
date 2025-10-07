@@ -15,7 +15,15 @@ services:
     environment:
       - MONGO_URI=mongodb://mongo:27017
       - MONGO_DB_NAME=age_groups_db
+      - REDIS_URL=redis://redis:6379/0
     ports:
       - "3000:3000"
     depends_on:
       - mongo
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    container_name: age-groups-redis
+    ports:
+      - "6379:6379"
