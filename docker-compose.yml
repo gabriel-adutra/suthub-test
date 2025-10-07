@@ -1,0 +1,21 @@
+services:
+  mongo:
+    build:
+      context: .
+      dockerfile: backend/mongo/Dockerfile
+    container_name: age-groups-mongo
+    ports:
+      - "27017:27017"
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: age-groups-api
+    environment:
+      - MONGO_URI=mongodb://mongo:27017
+      - MONGO_DB_NAME=age_groups_db
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongo
