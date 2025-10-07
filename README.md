@@ -36,16 +36,9 @@ curl -s -u admin:admin123 -X POST http://localhost:3000/api/v1/age-groups -H "Co
 curl -s -u admin:admin123 http://localhost:3000/api/v1/age-groups | jq .
 ```
 
-3) Deletar o primeiro grupo retornado.
+3) Deletar um grupo específico (substitua <GROUP_ID> pelo id desejado)
 ```bash
-id=$(curl -s -u admin:admin123 http://localhost:3000/api/v1/age-groups | jq -r '.[0].id // empty')
-if [ -z "$id" ]; then
-  echo "Nenhum grupo encontrado para ser deletado. Crie um grupo primeiro."
-else
-  echo "Deletando grupo com id: $id"
-  curl -i -s -u admin:admin123 -X DELETE "http://localhost:3000/api/v1/age-groups/$id"
-  echo "Solicitação de delete enviada para o grupo $id"
-fi
+curl -i -s -u admin:admin123 -X DELETE "http://localhost:3000/api/v1/age-groups/<GROUP_ID>"
 ```
 
 ### Desenvolvimento
