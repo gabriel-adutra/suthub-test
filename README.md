@@ -28,20 +28,29 @@ Com o `docker compose up` em execução:
 
 1) Criar grupo etário
 ```bash
-curl -s -X POST http://localhost:3000/api/v1/age-groups -H "Content-Type: application/json" -d '{"name":"Infantil","min_age":6,"max_age":10}' | jq .
+curl -s -u admin:admin123 -X POST http://localhost:3000/api/v1/age-groups -H "Content-Type: application/json" -d '{"name":"Infantil","min_age":6,"max_age":10}' | jq .
 ```
 
 2) Listar grupos
 ```bash
-curl -s http://localhost:3000/api/v1/age-groups | jq .
+curl -s -u admin:admin123 http://localhost:3000/api/v1/age-groups | jq .
 ```
 
-3) Deletar o primeiro grupo retornado (automático, sem substituições manuais)
+3) Deletar o primeiro grupo retornado.
 ```bash
-curl -i -s -X DELETE http://localhost:3000/api/v1/age-groups/$(curl -s http://localhost:3000/api/v1/age-groups | jq -r '.[0].id')
+id=$(curl -s -u admin:admin123 http://localhost:3000/api/v1/age-groups | jq -r '.[0].id // empty')
+if [ -z "$id" ]; then
+  echo "Nenhum grupo encontrado para ser deletado. Crie um grupo primeiro."
+else
+  echo "Deletando grupo com id: $id"
+  curl -i -s -u admin:admin123 -X DELETE "http://localhost:3000/api/v1/age-groups/$id"
+  echo "Solicitação de delete enviada para o grupo $id"
+fi
 ```
 
 ### Desenvolvimento
-- Código principal: `backend/api/app_groups.py`
+- Código principal: `backend/api/app.py`
 - Banco/Conexão: `backend/mongo/db.py`
 - Compose: `docker-compose.yml`.
+- Novo endpoint: POST `/api/v1/enrollments` (Request Enrollment)
+- Mensageria local: Redis (serviço `redis` no `docker-compose.yml`)
