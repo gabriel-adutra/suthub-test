@@ -1,9 +1,10 @@
 from typing import List
-from fastapi import FastAPI, status, HTTPException
+from fastapi import FastAPI, status, HTTPException, Depends
 import logging
 import uvicorn
 from bson import ObjectId
 from backend.mongo.db import connect_to_mongo, close_mongo_connection, get_collection
+from backend.auth.basic import basic_auth
 
 app = FastAPI(title="Age Groups API", version="1.0.0")
 
@@ -17,7 +18,7 @@ async def on_shutdown() -> None:
 	await close_mongo_connection()
 
 @app.get("/")
-async def root() -> dict:
+async def root(_: str = Depends(basic_auth)) -> dict:
 	return {"status": "ok"}
 
 # Endpoints Age Groups (prefixo /api/v1)
@@ -26,7 +27,7 @@ COLLECTION_NAME = "age_groups"
 
 #########
 @app.post("/api/v1/age-groups", status_code=status.HTTP_201_CREATED)
-async def create_age_group(payload: dict) -> dict:
+async def create_age_group(payload: dict, _: str = Depends(basic_auth)) -> dict:
 	name = payload.get("name")
 	min_age = payload.get("min_age")
 	max_age = payload.get("max_age")
@@ -58,7 +59,7 @@ async def create_age_group(payload: dict) -> dict:
 
 #########
 @app.get("/api/v1/age-groups")
-async def list_age_groups() -> List[dict]:
+async def list_age_groups(_: str = Depends(basic_auth)) -> List[dict]:
 	coll = get_collection(COLLECTION_NAME)
 	items: List[dict] = []
 	async for doc in coll.find().sort("min_age", 1):
@@ -68,7 +69,7 @@ async def list_age_groups() -> List[dict]:
 
 #########
 @app.delete("/api/v1/age-groups/{group_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_age_group(group_id: str) -> None:
+async def delete_age_group(group_id: str, _: str = Depends(basic_auth)) -> None:
 	if not ObjectId.is_valid(group_id):
 		raise HTTPException(status_code=400, detail="group_id inválido")
 	coll = get_collection(COLLECTION_NAME)
