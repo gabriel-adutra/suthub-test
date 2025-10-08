@@ -1,5 +1,5 @@
 from typing import List, Dict, Any
-from fastapi import FastAPI, status, HTTPException, Depends
+from fastapi import FastAPI, status, HTTPException, Depends, Path
 import logging
 import uvicorn
 from bson import ObjectId
@@ -93,22 +93,34 @@ QUEUE_KEY = "enrollments_queue"
 
 
 def _normalize_cpf(cpf: str) -> str:
+    # Remove pontos, hífens e qualquer caractere não numérico
     return re.sub(r"[^0-9]", "", cpf or "")
 
 
 def _validate_cpf_digits(cpf: str) -> bool:
-    # CPF must be 11 digits
-    if len(cpf) != 11 or cpf == cpf[0] * 11:
+    # Valida CPF: 11 dígitos, não todos iguais, dígitos verificadores corretos
+        # Validação oficial do CPF
+        if len(cpf) != 11 or not cpf.isdigit():
+            return False
+        # Rejeita CPFs com todos os dígitos iguais
+        if cpf == cpf[0] * 11:
+            return False
+        # Calcula primeiro dígito verificador
+        soma = sum(int(cpf[i]) * (10 - i) for i in range(9))
+        resto = soma % 11
+        if resto < 2:
+            dv1 = 0
+        else:
+            dv1 = 11 - resto
+        # Calcula segundo dígito verificador
+        soma = sum(int(cpf[i]) * (11 - i) for i in range(10))
+        resto = soma % 11
+        if resto < 2:
+            dv2 = 0
+        else:
+            dv2 = 11 - resto
+        return int(cpf[9]) == dv1 and int(cpf[10]) == dv2
         return False
-    def _calc(digs: str) -> int:
-        s = 0
-        for i, d in enumerate(digs, start=1):
-            s += int(d) * (len(digs) + 1 - i)
-        r = (s * 10) % 11
-        return r if r < 10 else 0
-    n1 = _calc(cpf[:9])
-    n2 = _calc(cpf[:10])
-    return n1 == int(cpf[9]) and n2 == int(cpf[10])
 
 
 @app.post("/api/v1/enrollments", status_code=status.HTTP_201_CREATED)
@@ -123,7 +135,7 @@ async def request_enrollment(payload: Dict[str, Any], _: str = Depends(basic_aut
 
     cpf_norm = _normalize_cpf(cpf)
     if not _validate_cpf_digits(cpf_norm):
-        raise HTTPException(status_code=422, detail="CPF inválido")
+        raise HTTPException(status_code=422, detail="CPF inválido (digitos verificadores ou formato)")
 
     # Check age group exists
     ag_coll = get_collection("age_groups")
@@ -157,6 +169,39 @@ async def request_enrollment(payload: Dict[str, Any], _: str = Depends(basic_aut
         raise HTTPException(status_code=500, detail="Erro ao enfileirar a solicitação")
 
     return {"enrollment_id": enrollment_id, "status": "queued"}
+
+
+#########
+# Endpoint para consultar status do enrollment
+@app.get("/api/v1/enrollments/{enrollment_id}")
+async def get_enrollment_status(enrollment_id: str = Path(..., description="ID da inscrição"), _: str = Depends(basic_auth)) -> dict:
+    coll = get_collection("enrollments")
+    try:
+        obj_id = ObjectId(enrollment_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="enrollment_id inválido")
+    enrollment = await coll.find_one({"_id": obj_id})
+    if not enrollment:
+        raise HTTPException(status_code=404, detail="Inscrição não encontrada")
+    import logging
+    logging.getLogger("uvicorn.error").info(f"DEBUG enrollment: {enrollment}")
+    def bson_to_json(val):
+        if isinstance(val, dict):
+            return {k: bson_to_json(v) for k, v in val.items()}
+        elif isinstance(val, list):
+            return [bson_to_json(v) for v in val]
+        elif isinstance(val, ObjectId):
+            return str(val)
+        elif isinstance(val, datetime):
+            return val.isoformat()
+        else:
+            return val
+    result = bson_to_json(enrollment)
+    result["enrollment_id"] = str(result.pop("_id"))
+    return result
+
+
+
 
 
 ######### ------------------------------ #########
