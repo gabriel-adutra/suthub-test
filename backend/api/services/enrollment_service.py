@@ -47,6 +47,10 @@ class EnrollmentService:
         if name is None or age is None or cpf is None:
             self.logger.warning(f"Payload incompleto: {payload}")
             raise HTTPException(status_code=400, detail="Campos obrigatórios: name, age, cpf")
+        # Nome não pode ser vazio ou só espaços
+        if isinstance(name, str) and name.strip() == "":
+            self.logger.warning("Nome vazio ou em branco fornecido na inscrição")
+            raise HTTPException(status_code=400, detail="name não pode ser vazio")
         if not isinstance(age, int):
             self.logger.warning(f"Idade não inteira: age={age}")
             raise HTTPException(status_code=400, detail="age deve ser inteiro")
