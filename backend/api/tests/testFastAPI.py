@@ -18,7 +18,7 @@ async def test_create_age_group_success():
         response = await client.post(
             AGE_GROUPS_URL,
             auth=AUTH,
-            json={"name": "Adulto", "min_age": 18, "max_age": 99}
+            json={"name": "Adulto", "min_age": 18, "max_age": 60}
         )
         logger.info(f"[PASS] test_create_age_group_success: status={response.status_code}, body={response.json()}")
         assert response.status_code == 201
@@ -32,7 +32,7 @@ async def test_create_age_group_missing_name():
         response = await client.post(
             AGE_GROUPS_URL,
             auth=AUTH,
-            json={"min_age": 10, "max_age": 20}
+            json={"min_age": 15, "max_age": 17}
         )
         logger.info(f"[PASS/FAIL] test_create_age_group_missing_name: status={response.status_code}, body={response.json()}")
         assert response.status_code == 400
@@ -54,15 +54,28 @@ async def test_create_age_group_conflict():
         await client.post(
             AGE_GROUPS_URL,
             auth=AUTH,
-            json={"name": "Jovem", "min_age": 10, "max_age": 20}
+            json={"name": "Jovem", "min_age": 0, "max_age": 9}
         )
         response = await client.post(
             AGE_GROUPS_URL,
             auth=AUTH,
-            json={"name": "Sobreposto", "min_age": 15, "max_age": 25}
+            json={"name": "Sobreposto", "min_age": 1, "max_age": 8}
         )
         logger.info(f"[PASS/FAIL] test_create_age_group_conflict: status={response.status_code}, body={response.json()}")
         assert response.status_code == 409
+
+@pytest.mark.asyncio
+async def test_create_enrollment_success():
+    global created_enrollment_id
+    async with httpx.AsyncClient() as client:
+        payload = {"name": "Teste Inscrição", "age": 25, "cpf": "09702414458"}
+        response = await client.post(ENROLLMENTS_URL, auth=AUTH, json=payload)
+        logger.info(f"[PASS/FAIL] test_create_enrollment_success: status={response.status_code}, body={response.json()}")
+        assert response.status_code == 201
+        data = response.json()
+        assert "enrollment_id" in data
+        assert data["status"] == "queued"
+        created_enrollment_id = data["enrollment_id"]
 
 @pytest.mark.asyncio
 async def test_delete_age_group():
@@ -87,18 +100,6 @@ async def test_auth_required():
         logger.info(f"[PASS/FAIL] test_auth_required: status={response.status_code}, body={response.text}")
         assert response.status_code == 401
 
-@pytest.mark.asyncio
-async def test_create_enrollment_success():
-    global created_enrollment_id
-    async with httpx.AsyncClient() as client:
-        payload = {"name": "Teste Inscrição", "age": 25, "cpf": "09702414458"}
-        response = await client.post(ENROLLMENTS_URL, auth=AUTH, json=payload)
-        logger.info(f"[PASS/FAIL] test_create_enrollment_success: status={response.status_code}, body={response.json()}")
-        assert response.status_code == 201
-        data = response.json()
-        assert "enrollment_id" in data
-        assert data["status"] == "queued"
-        created_enrollment_id = data["enrollment_id"]
 
 @pytest.mark.asyncio
 async def test_create_enrollment_blank_name():
@@ -119,7 +120,7 @@ async def test_create_enrollment_invalid_cpf():
 @pytest.mark.asyncio
 async def test_create_enrollment_age_out_of_range():
     async with httpx.AsyncClient() as client:
-        payload = {"name": "Fora da Faixa", "age": 5, "cpf": "09702414458"}
+        payload = {"name": "Fora da Faixa", "age": 99, "cpf": "09702414458"}
         response = await client.post(ENROLLMENTS_URL, auth=AUTH, json=payload)
         logger.info(f"[PASS/FAIL] test_create_enrollment_age_out_of_range: status={response.status_code}, body={response.json()}")
         assert response.status_code == 422
