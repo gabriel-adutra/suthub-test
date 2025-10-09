@@ -55,3 +55,17 @@ services:
       - "8501:8501"
     depends_on:
       - api
+
+  test:
+    build:
+      context: ./backend/api/tests
+      dockerfile: Dockerfile
+    container_name: age-groups-test
+    depends_on:
+      - api
+      - mongo
+      - redis
+    environment:
+      - MONGO_URI=mongodb://mongo:27017
+      - MONGO_DB_NAME=age_groups_db
+      - REDIS_URL=redis://redis:6379/0
