@@ -7,10 +7,7 @@ from bson import ObjectId
 from backend.mongo.db import connect_to_mongo, close_mongo_connection, get_collection
 from backend.auth.basic import basic_auth
 from datetime import datetime
-import redis.asyncio as redis
 import os
-import json
-from backend.utils.cpf_utils import CPFUtils
 
 app = FastAPI(title="Age Groups API", version="1.0.0")
 
