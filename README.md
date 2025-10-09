@@ -22,27 +22,9 @@ Este projeto entrega uma solução completa para gestão de grupos etários e in
 
 Fluxo resumido: a API valida e registra a intenção de inscrição (status inicial `queued`), publica a mensagem na fila Redis; o worker consome, valida regras (CPF e faixa etária), cria o usuário associado e marca como `completed` ou `rejected` / `failed` conforme o caso.
 
-```mermaid
-flowchart LR
-  User[(Cliente)] --> API[FastAPI]
-  API --> Mongo[(MongoDB)]
-  API --> Redis[(Redis Queue)]
-  Worker[Worker] --> Redis
-  Worker --> Mongo
-  subgraph Observabilidade
-    Logs[(Logging Estruturado)]
-  end
-  API --> Logs
-  Worker --> Logs
-```
 
 Diagrama completo: [arquitetura-teste.pdf](./arquitetura-teste.pdf)
 
-Características arquiteturais:
-- Desacoplamento via fila (buffer/backpressure).
-- Idempotência: worker só processa inscrições em `queued`.
-- Simplicidade operacional (tudo em containers Docker Compose).
-- Extensível para métricas (Prometheus) e tracing (OpenTelemetry) futuramente.
 
 ---
 
@@ -148,8 +130,7 @@ Todos os endpoints exigem HTTP Basic Auth:
 
 - Toda inscrição é enfileirada no Redis
 - O worker (`backend/worker/consumer_enrollment.py`) consome a fila e persiste no MongoDB
-- Status da inscrição: `queued` (aguardando processamento), `failed` (erro de fila), ou outros conforme evolução
-Status da inscrição:
+- Status da inscrição:
 - `queued`: aguardando processamento
 - `processing`: sendo processada pelo worker
 - `completed`: inscrição processada e usuário persistido
@@ -162,7 +143,7 @@ Status da inscrição:
 
 - Certifique-se que todos os containers estão "healthy" (API, Mongo, Redis, Worker)
 - Para logs detalhados, utilize:
-  `docker compose logs api`
+  `docker compose logs api` e 
   `docker compose logs worker`
 - Para testar CPF, use apenas números (sem pontos ou hífen)
 
