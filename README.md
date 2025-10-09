@@ -18,6 +18,34 @@ Este projeto entrega uma solução completa para gestão de grupos etários e in
 
 ---
 
+## 🧱 Arquitetura
+
+Fluxo resumido: a API valida e registra a intenção de inscrição (status inicial `queued`), publica a mensagem na fila Redis; o worker consome, valida regras (CPF e faixa etária), cria o usuário associado e marca como `completed` ou `rejected` / `failed` conforme o caso.
+
+```mermaid
+flowchart LR
+  User[(Cliente)] --> API[FastAPI]
+  API --> Mongo[(MongoDB)]
+  API --> Redis[(Redis Queue)]
+  Worker[Worker] --> Redis
+  Worker --> Mongo
+  subgraph Observabilidade
+    Logs[(Logging Estruturado)]
+  end
+  API --> Logs
+  Worker --> Logs
+```
+
+Diagrama completo: [arquitetura-teste.pdf](./arquitetura-teste.pdf)
+
+Características arquiteturais:
+- Desacoplamento via fila (buffer/backpressure).
+- Idempotência: worker só processa inscrições em `queued`.
+- Simplicidade operacional (tudo em containers Docker Compose).
+- Extensível para métricas (Prometheus) e tracing (OpenTelemetry) futuramente.
+
+---
+
 ## 🛠️ Tecnologias
 
 - **FastAPI**: API principal, endpoints REST
