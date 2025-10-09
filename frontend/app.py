@@ -1,16 +1,19 @@
 import streamlit as st
 import httpx
-from typing import Optional
+from typing import Optional, Tuple, Any
 
-API_BASE = "http://api:3000"  # service name in docker network
-AUTH = ("admin", "admin123")
+API_BASE = "http://api:3000"  # service name in docker network (docker compose network)
 
 st.set_page_config(page_title="Age Groups & Enrollment", page_icon="🗂️", layout="wide")
 
 # -------------- Helpers --------------
+def current_auth() -> Optional[Tuple[str, str]]:
+    return st.session_state.get("auth")
+
 async def fetch_json(client: httpx.AsyncClient, method: str, url: str, **kwargs):
+    auth = kwargs.pop("auth", current_auth())
     try:
-        resp = await client.request(method, url, auth=AUTH, timeout=10, **kwargs)
+        resp = await client.request(method, url, auth=auth, timeout=10, **kwargs)
         if resp.headers.get("content-type", "").startswith("application/json"):
             data = resp.json()
         else:
@@ -40,11 +43,50 @@ async def get_enrollment_status(client, enrollment_id: str):
 
 # -------------- UI Sections --------------
 st.title("🗂️ Age Groups & Enrollment Console")
-st.caption("Interface simples em Streamlit para explorar a API")
+st.caption("Interface simples em Streamlit para explorar a API (login obrigatório)")
 
 import asyncio
 
+async def validate_credentials(user: str, password: str) -> bool:
+    """Realiza uma chamada ao endpoint raiz para validar credenciais Basic Auth."""
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.get(f"{API_BASE}/", auth=(user, password), timeout=5)
+            return resp.status_code == 200
+        except Exception:
+            return False
+
+def logout():
+    if "auth" in st.session_state:
+        st.session_state.pop("auth")
+    st.experimental_rerun() if hasattr(st, "experimental_rerun") else st.rerun()
+
 async def main_ui():
+    # Gating de autenticação
+    if "auth" not in st.session_state:
+        with st.container():
+            st.subheader("🔐 Login")
+            with st.form("login_form", clear_on_submit=False):
+                user = st.text_input("Usuário", key="login_user")
+                pwd = st.text_input("Senha", type="password", key="login_pwd")
+                submitted = st.form_submit_button("Entrar")
+                if submitted:
+                    if not user or not pwd:
+                        st.warning("Preencha usuário e senha.")
+                    else:
+                        ok = await validate_credentials(user, pwd)
+                        if ok:
+                            st.session_state["auth"] = (user, pwd)
+                            st.success("Autenticado com sucesso.")
+                            st.rerun()
+                        else:
+                            st.error("Credenciais inválidas ou serviço indisponível.")
+        st.stop()
+
+    auth_user = st.session_state.get("auth")[0]
+    st.sidebar.markdown(f"**Usuário:** {auth_user}")
+    st.sidebar.button("Sair", on_click=logout)
+
     async with httpx.AsyncClient() as client:
         tabs = st.tabs(["Grupos Etários", "Inscrições", "Status de Inscrição", "Sobre"])
 
