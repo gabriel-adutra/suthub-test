@@ -41,3 +41,17 @@ services:
     depends_on:
       - redis
       - mongo
+
+  frontend:
+    image: python:3.11-slim
+    container_name: age-groups-frontend
+    working_dir: /app
+    volumes:
+      - ./:/app
+    command: bash -c "pip install -r frontend/requirements.txt && streamlit run frontend/app.py --server.port=8501 --server.address=0.0.0.0"
+    environment:
+      - PYTHONUNBUFFERED=1
+    ports:
+      - "8501:8501"
+    depends_on:
+      - api
