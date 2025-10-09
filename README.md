@@ -28,15 +28,38 @@ Diagrama completo: [arquitetura-teste.pdf](./arquitetura-teste.pdf)
 
 ---
 
-## 🛠️ Tecnologias
 
-- **FastAPI**: API principal, endpoints REST
-- **MongoDB**: armazenamento de grupos e inscrições
-- **Redis**: mensageria e fila de inscrições
-- **Python**: worker assíncrono, validação, integração
-- **Docker Compose**: orquestração dos serviços
+## �️ Frontend Web (Streamlit)
 
----
+O projeto inclui uma interface web moderna feita com Streamlit, permitindo:
+- Visualizar grupos etários cadastrados
+- Realizar inscrições com validação de CPF e faixa etária
+- Consultar status de inscrições
+- Login via autenticação Basic Auth (mesmas credenciais da API)
+
+### Como acessar
+- Após subir os serviços (`docker compose up --build`), acesse: [http://localhost:8501](http://localhost:8501)
+- O frontend depende da API estar rodando (porta 3000 por padrão)
+
+### Login
+- Ao acessar, será solicitado login (usuário/senha da API)
+- As credenciais padrão são:
+  - Usuário: `admin`
+  - Senha: `admin123`
+
+### Fluxo de uso
+1. Faça login na tela inicial
+2. Navegue pelas abas:
+   - **Grupos**: lista e consulta grupos etários
+   - **Inscrições**: envia nova inscrição (nome, idade, CPF)
+   - **Status**: consulta status de inscrições enviadas
+   - **Sobre**: informações do sistema
+3. Mensagens de erro e validação são exibidas diretamente na interface
+
+### Observações
+- O frontend realiza validações antes de enviar dados (nome obrigatório, CPF válido)
+- Erros da API são exibidos detalhadamente para facilitar diagnóstico
+- Logout disponível no menu lateral
 
 ## 📦 Estrutura do Projeto
 
@@ -64,8 +87,11 @@ README.md                 # Documentação
    `git clone https://github.com/gabriel-adutra/suthub-test.git && cd suthub-test`
 2. **Suba os serviços:**
    `docker compose up --build`
+
 3. **Acesse a API:**
-   [http://localhost:3000](http://localhost:3000)
+  [http://localhost:3000](http://localhost:3000)
+4. **Acesse o Frontend Web:**
+  [http://localhost:8501](http://localhost:8501)
 
 ---
 
