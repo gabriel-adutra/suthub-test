@@ -175,6 +175,42 @@ Todos os endpoints exigem HTTP Basic Auth:
 
 ---
 
+## 🧪 Ambiente de Testes & Integração via Docker
+
+O projeto inclui um container dedicado para testes de integração, permitindo rodar todos os testes automatizados em ambiente isolado, simulando o fluxo real do usuário e dos serviços.
+
+### Como funciona o ambiente de testes
+- O serviço de testes é definido no `docker-compose.yml` e utiliza um Dockerfile próprio em `backend/api/tests/Dockerfile`.
+- O container de testes sobe junto com os demais serviços (API, MongoDB, Redis, Worker, Frontend), garantindo que todos os endpoints e integrações estejam disponíveis.
+- Os testes utilizam `pytest` e cobrem todos os principais fluxos da API, incluindo casos de sucesso e erro.
+
+### Como rodar os testes de integração manualmente
+1. Certifique-se que todos os containers estão rodando:
+   ```bash
+   docker compose up --build
+   ```
+2. Execute os testes manualmente dentro do container de testes:
+   ```bash
+   docker compose exec test pytest -s --log-cli-level=INFO backend/api/tests/testFastAPI.py
+   ```
+   Ou para rodar todos os testes:
+   ```bash
+   docker compose exec test pytest -s --log-cli-level=INFO
+   ```
+3. Os logs detalhados dos testes serão exibidos no terminal, facilitando o diagnóstico e validação dos endpoints.
+
+### Observações
+- O ambiente de testes é totalmente isolado, não interfere nos dados reais do banco.
+- Os testes podem ser adaptados para rodar em pipelines CI/CD, garantindo qualidade contínua.
+- Para logs detalhados dos serviços, utilize também:
+  ```bash
+  docker compose logs api
+  docker compose logs worker
+  docker compose logs test
+  ```
+
+---
+
 ## 💡 Observações & Expansão
 
 - Próximos passos: testes automatizados, masking de dados sensíveis, métricas, monitoramento, etc.
