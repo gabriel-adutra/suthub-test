@@ -189,12 +189,21 @@ O projeto inclui um container dedicado para testes de integração, permitindo r
    ```bash
    docker compose up --build
    ```
-2. Execute os testes manualmente dentro do container de testes:
+2. Certifique-se que não há grupos criados no banco. É necessário que ele esteja vazio no início dos testes:
+   ```bash
+   curl -s -u admin:admin123 http://localhost:3000/api/v1/age-groups | jq .
+   ```
+3. Se houver grupos criados no banco, remova-os antes de rodar os testes automatizados:
+   ```bash
+   curl -i -s -u admin:admin123 -X DELETE "http://localhost:3000/api/v1/age-groups/<GROUP_ID>
+   ```
+   
+4. Execute os testes manualmente dentro do container de testes. O teste é idempotente a partir do estado inicial conhecido:
    ```bash
    docker compose exec test pytest -s --log-cli-level=INFO tests/testFastAPI.py
    ```
 
-3. Os logs detalhados dos testes serão exibidos no terminal, facilitando o diagnóstico e validação dos endpoints.
+4. Os logs detalhados dos testes serão exibidos no terminal, facilitando o diagnóstico e validação dos endpoints.
 
 ### Observações
 - O ambiente de testes é totalmente isolado, não interfere nos dados reais do banco.
