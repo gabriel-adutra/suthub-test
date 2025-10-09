@@ -20,7 +20,7 @@ Este projeto entrega uma solução completa para gestão de grupos etários e in
 
 ## 🧱 Arquitetura
 
-Fluxo resumido: a API valida e registra a intenção de inscrição (status inicial `queued`), publica a mensagem na fila Redis; o worker consome, valida regras (CPF e faixa etária), cria o usuário associado e marca como `completed` ou `rejected` / `failed` conforme o caso.
+Fluxo resumido: a API valida e registra a intenção de inscrição, publica a mensagem na fila Redis; o worker consome, valida regras (CPF e faixa etária), cria o usuário associado e marca como `completed` ou `rejected` / `failed` conforme o caso.
 
 
 Diagrama completo: [arquitetura-teste.pdf](./arquitetura-teste.pdf)
@@ -191,12 +191,9 @@ O projeto inclui um container dedicado para testes de integração, permitindo r
    ```
 2. Execute os testes manualmente dentro do container de testes:
    ```bash
-   docker compose exec test pytest -s --log-cli-level=INFO backend/api/tests/testFastAPI.py
+   docker compose exec test pytest -s --log-cli-level=INFO tests/testFastAPI.py
    ```
-   Ou para rodar todos os testes:
-   ```bash
-   docker compose exec test pytest -s --log-cli-level=INFO
-   ```
+
 3. Os logs detalhados dos testes serão exibidos no terminal, facilitando o diagnóstico e validação dos endpoints.
 
 ### Observações
