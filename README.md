@@ -211,12 +211,7 @@ O projeto inclui um container dedicado para testes de integração, permitindo r
 
 ---
 
-## 💡 Observações & Expansão
 
-- Próximos passos: testes automatizados, masking de dados sensíveis, métricas, monitoramento, etc.
+## 🤝 Dùvidas?
 
----
-
-## 🤝 Contribua
-
-Sugestões, dúvidas ou melhorias? Abra uma issue ou envie um pull request!
+Entre em contato através do email gabriel.adutra@ufpe.br
